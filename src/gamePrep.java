@@ -19,8 +19,10 @@ public class gamePrep extends JFrame implements KeyListener, ActionListener {
 
 	final static int CLIENT_PORT = 5656;
 	final static int SERVER_PORT = 5556;
-	
-    private frogger frogger;
+   
+    private frogger frogger1;
+    private frogger frogger2;
+    private frogger currentFrogger;
     private car[][] cars;
     private log[][] logs;
 
@@ -39,6 +41,8 @@ public class gamePrep extends JFrame implements KeyListener, ActionListener {
     private JButton restartButton;
 
     private boolean gameStarted = false;
+    
+    private int currentPlayer = 1;
 
     private void carLogInit() {
 
@@ -63,7 +67,7 @@ public class gamePrep extends JFrame implements KeyListener, ActionListener {
     }
 
     private void resetObjects() {
-        updateFroggerPosition(275, 400);
+        updateFroggerPosition(currentFrogger, 275, 400);
         stopCarsAndLogs();
         resetCarsAndLogs();
     }
@@ -116,14 +120,16 @@ public class gamePrep extends JFrame implements KeyListener, ActionListener {
         }
     }
 
-    private void updateFroggerPosition(int x, int y) {
+    private void updateFroggerPosition(frogger frogger, int x, int y) {
         frogger.setX(x);
         frogger.setY(y);
         froggerLabel.setLocation(frogger.getX(), frogger.getY());
     }
 
     public gamePrep() {
-        frogger = new frogger(100, 200, 96, 96, "frogger.png");
+        frogger1 = new frogger(100, 200, 96, 96, "frogger.png");
+        frogger2 = new frogger(200, 200, 96, 96, "frogger.png");
+        currentFrogger = frogger1;
         cars = new car[3][4];
         logs = new log[3][4];
 
@@ -139,19 +145,25 @@ public class gamePrep extends JFrame implements KeyListener, ActionListener {
         instructLabel.setBounds(200, 0, 200, 50);
         content.add(instructLabel);
 
-        frogger.setX(275);
-        frogger.setY(400);
-        frogger.setWidth(161);
-        frogger.setHeight(200);
-        frogger.setImage("frogger.png");
+        frogger1.setX(275);
+        frogger1.setY(400);
+        frogger1.setWidth(161);
+        frogger1.setHeight(200);
+        frogger1.setImage("frogger.png");
+        
+        frogger2.setX(275);
+        frogger2.setY(400);
+        frogger2.setWidth(161);
+        frogger2.setHeight(200);
+        frogger2.setImage("frogger.png");
 
         froggerLabel = new JLabel();
-        froggerImage = new ImageIcon(getClass().getResource("sprites/" + frogger.getImage()));
+        froggerImage = new ImageIcon(getClass().getResource("sprites/" + currentFrogger.getImage()));
 
         froggerLabel.setIcon(froggerImage);
-        froggerLabel.setSize(frogger.getWidth(), frogger.getHeight());
-        froggerLabel.setLocation(frogger.getX(), frogger.getY());
-        frogger.setFroggerLabel(froggerLabel);
+        froggerLabel.setSize(currentFrogger.getWidth(), currentFrogger.getHeight());
+        froggerLabel.setLocation(currentFrogger.getX(), currentFrogger.getY());
+        currentFrogger.setFroggerLabel(froggerLabel);
         add(froggerLabel);
 
         carLogInit();
@@ -253,14 +265,35 @@ public class gamePrep extends JFrame implements KeyListener, ActionListener {
 
         if (e.getKeyCode() == KeyEvent.VK_UP) {
             // SEND FROG UP\N
+        	sendCommand("PLAYER " + currentPlayer + " UP\n");
         } else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
             // SEND FROG DOWN\N
+        	sendCommand("PLAYER " + currentPlayer + " DOWN\n");
         } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             // SEND FROG LEFT\N
+        	sendCommand("PLAYER " + currentPlayer + " LEFT\n");
         } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
             // SEND FROG RIGHT\N
+        	sendCommand("PLAYER " + currentPlayer + " RIGHT\n");
         }
     }
+    
+    private void sendCommand(String command) {
+        try {
+            Socket s = new Socket("localhost", SERVER_PORT);
+            OutputStream outstream = s.getOutputStream();
+            PrintWriter out = new PrintWriter(outstream);
+
+            System.out.println("Sending: " + command);
+            out.println(command);
+            out.flush();
+
+            s.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
 
     @Override
     public void keyTyped(KeyEvent e) {
@@ -275,7 +308,8 @@ public class gamePrep extends JFrame implements KeyListener, ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == startButton) {
-            // SEND STARTGAME\n command to server
+        
+        	
         }
 
         if (e.getSource() == restartButton) {
